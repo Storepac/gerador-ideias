@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Video } from 'lucide-react';
 import { ContentScriptModal } from '@/components/ContentScriptModal';
 import { INITIAL_TOPICS, type GrowthTopic } from '@/lib/growthTopics';
@@ -12,9 +13,9 @@ export default function RoteiroPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-10 sm:px-6">
-      <a href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white">
+      <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Voltar ao Learning Lab
-      </a>
+      </Link>
 
       <section className="mt-8 rounded-[2rem] border border-blue-500/20 bg-white/[0.03] p-6 sm:p-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold text-cyan-100">
