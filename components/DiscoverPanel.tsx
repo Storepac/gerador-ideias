@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowRight, Filter, Layers, RefreshCw, Search, Sparkles } from 'lucide-react';
 import { CATEGORIES, type GrowthTopic } from '@/lib/growthTopics';
+import { DiscoverSelectionFeedback } from './DiscoverSelectionFeedback';
 import { TopicCard } from './TopicCard';
 
 interface DiscoverPanelProps {
@@ -30,6 +31,7 @@ export function DiscoverPanel({
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [mode, setMode] = useState<'single' | 'triple'>('single');
   const [selectedTopics, setSelectedTopics] = useState<GrowthTopic[]>([]);
+  const [isChoosing, setIsChoosing] = useState(false);
 
   const filteredTopics = topics.filter((topic) => {
     const matchesCategory = selectedCategory === 'all' || topic.category === selectedCategory;
@@ -38,16 +40,26 @@ export function DiscoverPanel({
   });
 
   const chooseTopics = () => {
-    if (filteredTopics.length === 0) return;
+    if (filteredTopics.length === 0 || isChoosing) return;
 
-    const startIndex = Date.now() % filteredTopics.length;
-    const quantity = mode === 'single' ? 1 : Math.min(3, filteredTopics.length);
-    const result = Array.from({ length: quantity }, (_, index) => filteredTopics[(startIndex + index) % filteredTopics.length]);
-    setSelectedTopics(result);
+    setIsChoosing(true);
+    setSelectedTopics([]);
 
     window.setTimeout(() => {
-      document.getElementById('discover-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+      const startIndex = Date.now() % filteredTopics.length;
+      const quantity = mode === 'single' ? 1 : Math.min(3, filteredTopics.length);
+      const result = Array.from(
+        { length: quantity },
+        (_, index) => filteredTopics[(startIndex + index) % filteredTopics.length],
+      );
+
+      setSelectedTopics(result);
+      setIsChoosing(false);
+
+      window.setTimeout(() => {
+        document.getElementById('discover-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    }, 1050);
   };
 
   return (
@@ -69,7 +81,8 @@ export function DiscoverPanel({
             <button
               type="button"
               onClick={() => setMode('single')}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition ${mode === 'single' ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/5 hover:text-white'}`}
+              disabled={isChoosing}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-60 ${mode === 'single' ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/5 hover:text-white'}`}
             >
               <Search className="h-4 w-4" aria-hidden="true" />
               1 tema
@@ -77,7 +90,8 @@ export function DiscoverPanel({
             <button
               type="button"
               onClick={() => setMode('triple')}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition ${mode === 'triple' ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/5 hover:text-white'}`}
+              disabled={isChoosing}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-60 ${mode === 'triple' ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/30' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/5 hover:text-white'}`}
             >
               <Layers className="h-4 w-4" aria-hidden="true" />
               3 temas
@@ -89,14 +103,14 @@ export function DiscoverPanel({
               <label htmlFor="discover-category" className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 <Filter className="h-3 w-3 text-blue-300" aria-hidden="true" /> Categoria
               </label>
-              <select id="discover-category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-xs text-white focus:border-blue-500/60 focus:outline-none">
+              <select id="discover-category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} disabled={isChoosing} className="w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-xs text-white focus:border-blue-500/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60">
                 {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
               </select>
             </div>
 
             <div className="text-left">
               <label htmlFor="discover-difficulty" className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400">Dificuldade</label>
-              <select id="discover-difficulty" value={selectedDifficulty} onChange={(event) => setSelectedDifficulty(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-xs text-white focus:border-blue-500/60 focus:outline-none">
+              <select id="discover-difficulty" value={selectedDifficulty} onChange={(event) => setSelectedDifficulty(event.target.value)} disabled={isChoosing} className="w-full rounded-xl border border-white/10 bg-[#07111f] px-3 py-2.5 text-xs text-white focus:border-blue-500/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60">
                 <option value="all">Todas as dificuldades</option>
                 <option value="Iniciante">Iniciante</option>
                 <option value="Intermediário">Intermediário</option>
@@ -105,16 +119,18 @@ export function DiscoverPanel({
             </div>
           </div>
 
-          <button type="button" onClick={chooseTopics} disabled={filteredTopics.length === 0} className="mt-7 inline-flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50">
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            Encontrar tema da semana
+          <button type="button" onClick={chooseTopics} disabled={filteredTopics.length === 0 || isChoosing} className="mt-7 inline-flex min-w-64 items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70">
+            <Sparkles className={`h-4 w-4 ${isChoosing ? 'animate-pulse' : ''}`} aria-hidden="true" />
+            {isChoosing ? 'Buscando um tema...' : 'Encontrar tema da semana'}
           </button>
 
           {filteredTopics.length === 0 && <p className="mt-3 text-xs text-cyan-300">Nenhum tema encontrado. Ajuste os filtros.</p>}
         </div>
       </section>
 
-      {selectedTopics.length > 0 ? (
+      {isChoosing && <DiscoverSelectionFeedback />}
+
+      {!isChoosing && selectedTopics.length > 0 ? (
         <section id="discover-results" className="scroll-mt-24 space-y-5">
           <div className="flex flex-col justify-between gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center">
             <div>
@@ -132,7 +148,7 @@ export function DiscoverPanel({
             ))}
           </div>
         </section>
-      ) : (
+      ) : !isChoosing ? (
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
           <p className="text-sm text-slate-500">Você também pode navegar por todos os conceitos já cadastrados.</p>
           {onOpenLibrary && (
@@ -141,7 +157,7 @@ export function DiscoverPanel({
             </button>
           )}
         </section>
-      )}
+      ) : null}
     </div>
   );
 }
