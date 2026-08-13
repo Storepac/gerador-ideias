@@ -1,35 +1,43 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+:root {
+  --t4w-bg: #07111f;
+  --t4w-panel: #0b1728;
+  --t4w-panel-soft: #0f1d31;
+  --t4w-primary: #2563eb;
+  --t4w-primary-bright: #3b82f6;
+  --t4w-cyan: #22d3ee;
+  --t4w-text: #f8fafc;
+  --t4w-muted: #94a3b8;
+}
+
 @layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #0a0a0a;
-    color: #e0e0e0;
-  }
-  
-  h1, h2, h3, .font-serif {
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    margin: 0;
+    font-family: var(--font-outfit), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.16), transparent 32rem),
+      radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.08), transparent 26rem),
+      var(--t4w-bg);
+    color: var(--t4w-text);
   }
 }
 
-::selection {
-  background-color: #c8a45d;
-  color: #000000;
+::selection { background: #2563eb; color: #ffffff; }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 
-/* Custom scrollbar for sophisticated dark theme */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0a0a0a;
-}
-::-webkit-scrollbar-thumb {
-  background: #262626;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #c8a45d;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #07111f; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
