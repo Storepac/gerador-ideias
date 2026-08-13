@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { GrowthTopic } from '@/lib/growthTopics';
-import { Sparkles, Bookmark, CalendarPlus, Target, HelpCircle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Bookmark, CalendarPlus, CheckCircle2, HelpCircle, Sparkles, Target, Video } from 'lucide-react';
 
 interface TopicCardProps {
   topic: GrowthTopic;
   onExplain: (topic: GrowthTopic) => void;
+  onCreateScript: (topic: GrowthTopic) => void;
   onAddToPlan: (topic: GrowthTopic) => void;
   onStartChallenge: (topic: GrowthTopic) => void;
   isBookmarked: boolean;
@@ -14,129 +15,43 @@ interface TopicCardProps {
   isInPlan?: boolean;
 }
 
-export const TopicCard: React.FC<TopicCardProps> = ({
-  topic,
-  onExplain,
-  onAddToPlan,
-  onStartChallenge,
-  isBookmarked,
-  onToggleBookmark,
-  isInPlan = false,
-}) => {
-  const difficultyColors = {
-    Iniciante: 'bg-[#c8a45d]/10 text-[#c8a45d] border-[#c8a45d]/30',
-    Intermediário: 'bg-[#c8a45d]/15 text-[#e5c583] border-[#c8a45d]/40',
-    Avançado: 'bg-[#c8a45d]/20 text-[#f5d898] border-[#c8a45d]/50',
-  };
-
+export const TopicCard: React.FC<TopicCardProps> = ({ topic, onExplain, onCreateScript, onAddToPlan, onStartChallenge, isBookmarked, onToggleBookmark, isInPlan = false }) => {
   return (
-    <div className="group relative bg-[#0d0d0d] hover:bg-[#121212] rounded-2xl border border-white/10 hover:border-[#c8a45d]/40 p-6 transition-all duration-300 shadow-xl flex flex-col justify-between">
+    <article className="group flex h-full flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-xl shadow-black/10 transition hover:-translate-y-1 hover:border-blue-500/30 hover:bg-white/[0.05]">
       <div>
-        {/* Header Badges */}
-        <div className="flex items-start justify-between gap-2 mb-4">
+        <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-white/70 border border-white/10">
-              {topic.categoryLabel}
-            </span>
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
-                difficultyColors[topic.difficulty]
-              }`}
-            >
-              {topic.difficulty}
-            </span>
+            <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-300">{topic.categoryLabel}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-300">{topic.difficulty}</span>
           </div>
-
-          <button
-            onClick={() => onToggleBookmark(topic.id)}
-            className={`p-1.5 rounded-full transition-colors ${
-              isBookmarked
-                ? 'text-[#c8a45d] bg-[#c8a45d]/10 border border-[#c8a45d]/30'
-                : 'text-white/30 hover:text-white/80 hover:bg-white/5'
-            }`}
-            title={isBookmarked ? 'Remover dos favoritos' : 'Favoritar tema'}
-          >
-            <Bookmark className="w-4 h-4 fill-current" />
+          <button type="button" onClick={() => onToggleBookmark(topic.id)} aria-label={isBookmarked ? 'Remover dos favoritos' : 'Favoritar tema'} className={isBookmarked ? 'rounded-xl bg-blue-500/10 p-2 text-blue-300 ring-1 ring-blue-500/20' : 'rounded-xl p-2 text-slate-500 transition hover:bg-white/5 hover:text-white'}>
+            <Bookmark className="h-4 w-4" fill={isBookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
           </button>
         </div>
 
-        {/* Title */}
-        <h3 className="text-xl font-serif font-bold text-white group-hover:text-[#c8a45d] transition-colors mb-2.5 leading-snug">
-          {topic.title}
-        </h3>
+        <h3 className="text-xl font-bold leading-snug text-white transition group-hover:text-blue-200">{topic.title}</h3>
+        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{topic.shortDescription}</p>
 
-        {/* Short Description */}
-        <p className="text-xs text-white/60 leading-relaxed mb-4 line-clamp-3">
-          {topic.shortDescription}
-        </p>
-
-        {/* Key Questions Preview */}
-        {topic.keyQuestions && topic.keyQuestions.length > 0 && (
-          <div className="mb-4 bg-[#141414] rounded-xl p-3 border border-white/5">
-            <div className="flex items-center space-x-1.5 text-[10px] uppercase tracking-widest font-bold text-[#c8a45d] mb-1">
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Questão Guia</span>
-            </div>
-            <p className="text-xs text-white/80 italic font-serif">
-              &quot;{topic.keyQuestions[0]}&quot;
-            </p>
+        {topic.keyQuestions?.[0] && (
+          <div className="mt-5 rounded-2xl border border-white/5 bg-black/15 p-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-300"><HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />Pergunta para pensar</div>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{topic.keyQuestions[0]}</p>
           </div>
         )}
 
-        {/* Framework & Real Example Badge */}
-        {topic.suggestedFramework && (
-          <div className="mb-4 flex items-center space-x-2 text-[11px] text-white/50">
-            <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold">Framework:</span>
-            <span className="bg-white/5 text-white/80 px-2 py-0.5 rounded text-xs border border-white/10 truncate max-w-full font-mono">
-              {topic.suggestedFramework}
-            </span>
-          </div>
-        )}
+        {topic.suggestedFramework && <div className="mt-4 text-xs leading-5 text-slate-500"><span className="font-semibold text-slate-400">Framework: </span>{topic.suggestedFramework}</div>}
       </div>
 
-      {/* Footer Actions */}
-      <div className="pt-4 border-t border-white/10 space-y-2">
+      <div className="mt-6 space-y-2 border-t border-white/10 pt-5">
+        <button type="button" onClick={() => onExplain(topic)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"><Sparkles className="h-4 w-4" aria-hidden="true" />Entender com IA</button>
+        <button type="button" onClick={() => onCreateScript(topic)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"><Video className="h-4 w-4" aria-hidden="true" />Roteiro 60–90s</button>
         <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => onExplain(topic)}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-full bg-[#c8a45d] hover:brightness-110 text-black font-bold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(200,164,93,0.15)] transition-all active:scale-[0.98]"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Guia IA</span>
-          </button>
-
-          <button
-            onClick={() => onStartChallenge(topic)}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-full bg-[#141414] hover:bg-white/10 text-white/80 hover:text-white font-medium text-xs uppercase tracking-wider transition-all border border-white/10"
-          >
-            <Target className="w-3.5 h-3.5 text-[#c8a45d]" />
-            <span>Desafio</span>
+          <button type="button" onClick={() => onStartChallenge(topic)} className="flex items-center justify-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white"><Target className="h-3.5 w-3.5 text-blue-300" aria-hidden="true" />Aplicar</button>
+          <button type="button" onClick={() => onAddToPlan(topic)} className={isInPlan ? 'flex items-center justify-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-200' : 'flex items-center justify-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white'}>
+            {isInPlan ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <CalendarPlus className="h-3.5 w-3.5" aria-hidden="true" />}{isInPlan ? 'No plano' : 'Planejar'}
           </button>
         </div>
-
-        <button
-          onClick={() => onAddToPlan(topic)}
-          className={`w-full flex items-center justify-center space-x-1.5 px-3 py-2 rounded-full text-xs uppercase tracking-wider font-semibold transition-all ${
-            isInPlan
-              ? 'bg-[#c8a45d]/10 text-[#c8a45d] border border-[#c8a45d]/30'
-              : 'bg-[#141414] hover:bg-white/5 text-white/60 hover:text-white border border-white/10'
-          }`}
-        >
-          {isInPlan ? (
-            <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#c8a45d]" />
-              <span>No Plano Semanal</span>
-            </>
-          ) : (
-            <>
-              <CalendarPlus className="w-3.5 h-3.5 text-[#c8a45d]" />
-              <span>Adicionar ao Plano</span>
-              <ChevronRight className="w-3 h-3 text-white/30" />
-            </>
-          )}
-        </button>
       </div>
-    </div>
+    </article>
   );
 };
-
