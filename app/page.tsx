@@ -9,7 +9,6 @@ import { AiDeepDiveModal } from '@/components/AiDeepDiveModal';
 import { CaseChallengeModal } from '@/components/CaseChallengeModal';
 import { NewTopicModal } from '@/components/NewTopicModal';
 import { ProductContextModal } from '@/components/ProductContextModal';
-import { ContentScriptModal } from '@/components/ContentScriptModal';
 import { GrowthTopic, INITIAL_TOPICS } from '@/lib/growthTopics';
 import {
   getStoredTopics,
@@ -24,21 +23,17 @@ import {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'roulette' | 'planner' | 'library'>('roulette');
-  const [topics, setTopics] = useState<GrowthTopic[]>(() => {
-    if (typeof window !== 'undefined') return getStoredTopics();
-    return INITIAL_TOPICS;
-  });
-  const [plan, setPlan] = useState<WeeklyPlanItem[]>(() => {
-    if (typeof window !== 'undefined') return getStoredPlan();
-    return [];
-  });
-  const [prefs, setPrefs] = useState<UserPreferences>(() => {
-    if (typeof window !== 'undefined') return getStoredPrefs();
-    return { currentWeek: 1, weeklyGoal: 1, targetCategories: [], productContext: '', bookmarkedTopicIds: [] };
+  const [topics, setTopics] = useState<GrowthTopic[]>(() => typeof window !== 'undefined' ? getStoredTopics() : INITIAL_TOPICS);
+  const [plan, setPlan] = useState<WeeklyPlanItem[]>(() => typeof window !== 'undefined' ? getStoredPlan() : []);
+  const [prefs, setPrefs] = useState<UserPreferences>(() => typeof window !== 'undefined' ? getStoredPrefs() : {
+    currentWeek: 1,
+    weeklyGoal: 1,
+    targetCategories: [],
+    productContext: '',
+    bookmarkedTopicIds: [],
   });
 
   const [explainTopic, setExplainTopic] = useState<GrowthTopic | null>(null);
-  const [scriptTopic, setScriptTopic] = useState<GrowthTopic | null>(null);
   const [challengeTopic, setChallengeTopic] = useState<GrowthTopic | null>(null);
   const [isNewTopicOpen, setIsNewTopicOpen] = useState(false);
   const [isContextOpen, setIsContextOpen] = useState(false);
@@ -56,7 +51,7 @@ export default function Home() {
   const handleAddToPlan = (topic: GrowthTopic, cachedExplanation?: string, weekNum?: number) => {
     const targetWeek = weekNum || prefs.currentWeek || 1;
     const existingIndex = plan.findIndex((item) => item.topicId === topic.id);
-    let updatedPlan: WeeklyPlanItem[] = [];
+    let updatedPlan: WeeklyPlanItem[];
 
     if (existingIndex >= 0) {
       updatedPlan = [...plan];
@@ -82,38 +77,38 @@ export default function Home() {
     saveStoredPlan(updatedPlan);
   };
 
-  const handleUpdateItemStatus = (itemId: string, newStatus: WeeklyPlanItem['status']) => {
+  const updateStatus = (itemId: string, status: WeeklyPlanItem['status']) => {
     const updated = plan.map((item) => item.id === itemId ? {
       ...item,
-      status: newStatus,
-      completedAt: newStatus === 'mastered' || newStatus === 'applied' ? new Date().toISOString() : item.completedAt,
+      status,
+      completedAt: status === 'mastered' || status === 'applied' ? new Date().toISOString() : item.completedAt,
     } : item);
     setPlan(updated);
     saveStoredPlan(updated);
   };
 
-  const handleUpdateItemNotes = (itemId: string, notes: string) => {
+  const updateNotes = (itemId: string, notes: string) => {
     const updated = plan.map((item) => item.id === itemId ? { ...item, notes } : item);
     setPlan(updated);
     saveStoredPlan(updated);
   };
 
-  const handleRemovePlanItem = (itemId: string) => {
+  const removePlanItem = (itemId: string) => {
     const updated = plan.filter((item) => item.id !== itemId);
     setPlan(updated);
     saveStoredPlan(updated);
   };
 
-  const handleCreateTopic = (newTopic: GrowthTopic) => {
-    const updatedTopics = [newTopic, ...topics];
-    setTopics(updatedTopics);
-    saveStoredTopics(updatedTopics);
+  const createTopic = (topic: GrowthTopic) => {
+    const updated = [topic, ...topics];
+    setTopics(updated);
+    saveStoredTopics(updated);
   };
 
-  const handleSaveProductContext = (context: string) => {
-    const updatedPrefs = { ...prefs, productContext: context };
-    setPrefs(updatedPrefs);
-    saveStoredPrefs(updatedPrefs);
+  const saveProductContext = (context: string) => {
+    const updated = { ...prefs, productContext: context };
+    setPrefs(updated);
+    saveStoredPrefs(updated);
   };
 
   const plannedTopicIds = plan.map((item) => item.topicId);
@@ -121,75 +116,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-16 text-slate-100">
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        masteredCount={masteredCount}
-        totalPlannedCount={plan.length}
-        openProductContextModal={() => setIsContextOpen(true)}
-        productContext={prefs.productContext}
-      />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} masteredCount={masteredCount} totalPlannedCount={plan.length} openProductContextModal={() => setIsContextOpen(true)} productContext={prefs.productContext} />
 
       <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        {activeTab === 'roulette' && (
-          <RandomWheel
-            topics={topics}
-            onExplain={setExplainTopic}
-            onCreateScript={setScriptTopic}
-            onAddToPlan={(topic) => handleAddToPlan(topic, undefined, prefs.currentWeek)}
-            onStartChallenge={setChallengeTopic}
-            bookmarkedIds={prefs.bookmarkedTopicIds}
-            onToggleBookmark={handleToggleBookmark}
-            plannedTopicIds={plannedTopicIds}
-            onOpenLibrary={() => setActiveTab('library')}
-          />
-        )}
-
-        {activeTab === 'planner' && (
-          <StudyPlanner
-            plan={plan}
-            allTopics={topics}
-            onUpdateItemStatus={handleUpdateItemStatus}
-            onUpdateItemNotes={handleUpdateItemNotes}
-            onRemoveItem={handleRemovePlanItem}
-            onExplainTopic={setExplainTopic}
-            onOpenLibraryToSelect={(weekNumber) => {
-              setTargetWeekForAdd(weekNumber);
-              setActiveTab('library');
-            }}
-          />
-        )}
-
-        {activeTab === 'library' && (
-          <TopicLibrary
-            topics={topics}
-            onExplain={setExplainTopic}
-            onCreateScript={setScriptTopic}
-            onAddToPlan={(topic) => handleAddToPlan(topic, undefined, targetWeekForAdd)}
-            onStartChallenge={setChallengeTopic}
-            bookmarkedIds={prefs.bookmarkedTopicIds}
-            onToggleBookmark={handleToggleBookmark}
-            plannedTopicIds={plannedTopicIds}
-            onOpenCreateTopicModal={() => setIsNewTopicOpen(true)}
-          />
-        )}
+        {activeTab === 'roulette' && <RandomWheel topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, prefs.currentWeek)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenLibrary={() => setActiveTab('library')} />}
+        {activeTab === 'planner' && <StudyPlanner plan={plan} allTopics={topics} onUpdateItemStatus={updateStatus} onUpdateItemNotes={updateNotes} onRemoveItem={removePlanItem} onExplainTopic={setExplainTopic} onOpenLibraryToSelect={(weekNumber) => { setTargetWeekForAdd(weekNumber); setActiveTab('library'); }} />}
+        {activeTab === 'library' && <TopicLibrary topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, targetWeekForAdd)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenCreateTopicModal={() => setIsNewTopicOpen(true)} />}
       </main>
 
-      <AiDeepDiveModal
-        topic={explainTopic}
-        onClose={() => setExplainTopic(null)}
-        onAddToPlan={(topic, cache) => handleAddToPlan(topic, cache, prefs.currentWeek)}
-        onStartChallenge={setChallengeTopic}
-        productContext={prefs.productContext}
-        isInPlan={explainTopic ? plannedTopicIds.includes(explainTopic.id) : false}
-      />
-      <ContentScriptModal topic={scriptTopic} productContext={prefs.productContext} onClose={() => setScriptTopic(null)} />
+      <AiDeepDiveModal topic={explainTopic} onClose={() => setExplainTopic(null)} onAddToPlan={(topic, cache) => handleAddToPlan(topic, cache, prefs.currentWeek)} onStartChallenge={setChallengeTopic} productContext={prefs.productContext} isInPlan={explainTopic ? plannedTopicIds.includes(explainTopic.id) : false} />
       <CaseChallengeModal topic={challengeTopic} onClose={() => setChallengeTopic(null)} />
-      <NewTopicModal isOpen={isNewTopicOpen} onClose={() => setIsNewTopicOpen(false)} onCreateTopic={handleCreateTopic} />
-      <ProductContextModal isOpen={isContextOpen} onClose={() => setIsContextOpen(false)} productContext={prefs.productContext} onSaveProductContext={handleSaveProductContext} />
+      <NewTopicModal isOpen={isNewTopicOpen} onClose={() => setIsNewTopicOpen(false)} onCreateTopic={createTopic} />
+      <ProductContextModal isOpen={isContextOpen} onClose={() => setIsContextOpen(false)} productContext={prefs.productContext} onSaveProductContext={saveProductContext} />
 
       <footer className="mx-auto mt-16 max-w-7xl border-t border-white/10 px-4 pt-8 text-center text-xs text-slate-500">
-        <p>TechForWeb Learning Lab · aprender, aplicar e explicar melhor.</p>
+        TechForWeb Learning Lab · aprender, aplicar e explicar melhor.
       </footer>
     </div>
   );
