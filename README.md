@@ -40,3 +40,5 @@ As rotas de IA possuem validação básica de payload e rate limit em memória p
 ## Estado
 
 Piloto em evolução. O projeto permanece `noindex` enquanto identidade, build, deploy e fluxo público ainda estão sendo validados.
+
+O primeiro preview Vercel da branch de reposicionamento deve ser tratado como gate visual e técnico antes de qualquer merge para `main`.
