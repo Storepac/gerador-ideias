@@ -1,0 +1,6 @@
+{
+  "name": "Growth PM Concept Generator",
+  "description": "Gerador de temas e conceitos para Growth Product Managers com plano de estudos semanal e aprofundamento via IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
