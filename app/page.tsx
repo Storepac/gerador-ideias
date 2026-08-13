@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { DiscoverPanel } from '@/components/DiscoverPanel';
+import { TechForWebDiscover } from '@/components/TechForWebDiscover';
 import { StudyPlanner } from '@/components/StudyPlanner';
 import { TopicLibrary } from '@/components/TopicLibrary';
 import { AiDeepDiveModal } from '@/components/AiDeepDiveModal';
@@ -119,7 +119,7 @@ export default function Home() {
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} masteredCount={masteredCount} totalPlannedCount={plan.length} openProductContextModal={() => setIsContextOpen(true)} productContext={prefs.productContext} />
 
       <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        {activeTab === 'roulette' && <DiscoverPanel topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, prefs.currentWeek)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenLibrary={() => setActiveTab('library')} />}
+        {activeTab === 'roulette' && <TechForWebDiscover topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, prefs.currentWeek)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenLibrary={() => setActiveTab('library')} />}
         {activeTab === 'planner' && <StudyPlanner plan={plan} allTopics={topics} onUpdateItemStatus={updateStatus} onUpdateItemNotes={updateNotes} onRemoveItem={removePlanItem} onExplainTopic={setExplainTopic} onOpenLibraryToSelect={(weekNumber) => { setTargetWeekForAdd(weekNumber); setActiveTab('library'); }} />}
         {activeTab === 'library' && <TopicLibrary topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, targetWeekForAdd)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenCreateTopicModal={() => setIsNewTopicOpen(true)} />}
       </main>
