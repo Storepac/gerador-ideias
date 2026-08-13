@@ -1,10 +1,10 @@
 {
-  "name": "techforweb-learning-lab",
+  "name": "ai-studio-applet",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "eslint . && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean"

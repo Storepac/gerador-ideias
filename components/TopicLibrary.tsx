@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BookOpen, Plus, Search } from 'lucide-react';
 import { GrowthTopic, CATEGORIES } from '@/lib/growthTopics';
 import { TopicCard } from './TopicCard';
+import { Search, Filter, Plus, BookOpen, Sparkles, Library } from 'lucide-react';
 
 interface TopicLibraryProps {
   topics: GrowthTopic[];
@@ -16,63 +16,149 @@ interface TopicLibraryProps {
   onOpenCreateTopicModal: () => void;
 }
 
-export const TopicLibrary: React.FC<TopicLibraryProps> = ({ topics, onExplain, onAddToPlan, onStartChallenge, bookmarkedIds, onToggleBookmark, plannedTopicIds, onOpenCreateTopicModal }) => {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('all');
-  const [difficulty, setDifficulty] = useState('all');
-  const [onlyBookmarks, setOnlyBookmarks] = useState(false);
+export const TopicLibrary: React.FC<TopicLibraryProps> = ({
+  topics,
+  onExplain,
+  onAddToPlan,
+  onStartChallenge,
+  bookmarkedIds,
+  onToggleBookmark,
+  plannedTopicIds,
+  onOpenCreateTopicModal,
+}) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [onlyBookmarks, setOnlyBookmarks] = useState<boolean>(false);
 
-  const filtered = topics.filter((topic) => {
-    const term = query.trim().toLowerCase();
-    const matchesText = !term || topic.title.toLowerCase().includes(term) || topic.shortDescription.toLowerCase().includes(term) || topic.tags.some((tag) => tag.toLowerCase().includes(term));
-    const matchesCategory = category === 'all' || topic.category === category;
-    const matchesDifficulty = difficulty === 'all' || topic.difficulty === difficulty;
-    const matchesBookmark = !onlyBookmarks || bookmarkedIds.includes(topic.id);
-    return matchesText && matchesCategory && matchesDifficulty && matchesBookmark;
+  const filteredTopics = topics.filter((t) => {
+    const matchesSearch =
+      t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
+    const matchesDifficulty = selectedDifficulty === 'all' || t.difficulty === selectedDifficulty;
+    const matchesBookmark = !onlyBookmarks || bookmarkedIds.includes(t.id);
+
+    return matchesSearch && matchesCategory && matchesDifficulty && matchesBookmark;
   });
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] border border-blue-500/20 bg-white/[0.03] p-6 sm:p-8">
-        <span className="text-xs font-bold uppercase tracking-[0.16em] text-blue-300">Biblioteca TechForWeb</span>
-        <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <h1 className="text-3xl font-black text-white sm:text-4xl">Repertório para aprender e aplicar.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Explore conceitos de produto, growth, marketing, vendas e estratégia. Salve o que faz sentido e leve para seu plano de estudo.</p>
+      {/* Header Banner */}
+      <div className="bg-[#0d0d0d] rounded-3xl border border-white/10 p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2 text-[10px] uppercase tracking-[0.2em] font-bold text-[#c8a45d]">
+            <Library className="w-3.5 h-3.5" />
+            <span>Acervo Interno de Conhecimento</span>
           </div>
-          <button type="button" onClick={onOpenCreateTopicModal} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"><Plus className="h-4 w-4" aria-hidden="true" />Novo tema</button>
+          <h2 className="text-3xl font-serif text-white tracking-tight">
+            Repositório Estratégico de <span className="italic text-[#c8a45d]">Marketing, Produto & Vendas</span>
+          </h2>
+          <p className="text-xs text-white/60 max-w-xl leading-relaxed">
+            Consulte qualquer um dos {topics.length} conceitos do acervo interno. Pesquise por termos de tráfego, branding, copywriting, CRO, onboarding, retenção e estratégia.
+          </p>
         </div>
-      </section>
 
-      <section className="grid gap-3 md:grid-cols-12">
-        <label className="relative md:col-span-6">
-          <span className="sr-only">Buscar tema</span>
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar tema, framework ou métrica..." className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-3 pl-11 pr-4 text-sm text-white placeholder:text-slate-600" />
-        </label>
-        <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white md:col-span-3">
-          {CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-        </select>
-        <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)} className="rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white md:col-span-3">
-          <option value="all">Todos os níveis</option>
-          <option value="Iniciante">Iniciante</option>
-          <option value="Intermediário">Intermediário</option>
-          <option value="Avançado">Avançado</option>
-        </select>
-      </section>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-        <span>{filtered.length} de {topics.length} temas</span>
-        <label className="inline-flex items-center gap-2"><input type="checkbox" checked={onlyBookmarks} onChange={(event) => setOnlyBookmarks(event.target.checked)} />Somente favoritos ({bookmarkedIds.length})</label>
+        <button
+          onClick={onOpenCreateTopicModal}
+          className="flex items-center justify-center space-x-2 px-6 py-3 rounded-full bg-[#c8a45d] hover:brightness-110 text-black font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(200,164,93,0.2)] transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4 text-black" />
+          <span>Cadastrar Novo Tema</span>
+        </button>
       </div>
 
-      {filtered.length ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((topic) => <TopicCard key={topic.id} topic={topic} onExplain={onExplain} onAddToPlan={onAddToPlan} onStartChallenge={onStartChallenge} isBookmarked={bookmarkedIds.includes(topic.id)} onToggleBookmark={onToggleBookmark} isInPlan={plannedTopicIds.includes(topic.id)} />)}
+      {/* Search & Filters */}
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+          {/* Search Input */}
+          <div className="md:col-span-6 relative">
+            <Search className="w-4 h-4 text-white/30 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por termo, métrica, framework (ex: Retention, CAC, Hook Model)..."
+              className="w-full bg-[#141414] border border-white/10 rounded-full pl-11 pr-4 py-3 text-xs text-white focus:outline-none focus:border-[#c8a45d]"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="md:col-span-3">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full bg-[#141414] border border-white/10 rounded-full px-4 py-3 text-xs text-white/90 focus:outline-none focus:border-[#c8a45d]"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Difficulty Filter */}
+          <div className="md:col-span-3">
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              className="w-full bg-[#141414] border border-white/10 rounded-full px-4 py-3 text-xs text-white/90 focus:outline-none focus:border-[#c8a45d]"
+            >
+              <option value="all">Todas as Dificuldades</option>
+              <option value="Iniciante">Iniciante</option>
+              <option value="Intermediário">Intermediário</option>
+              <option value="Avançado">Avançado</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Bookmark Filter Toggle & Count */}
+        <div className="flex items-center justify-between text-xs text-white/60 pt-1">
+          <span className="font-bold text-white/80 uppercase tracking-widest text-[10px]">
+            Exibindo {filteredTopics.length} de {topics.length} temas
+          </span>
+
+          <label className="flex items-center space-x-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={onlyBookmarks}
+              onChange={(e) => setOnlyBookmarks(e.target.checked)}
+              className="rounded border-white/10 bg-[#141414] text-[#c8a45d] focus:ring-[#c8a45d]"
+            />
+            <span className="text-xs">Apenas Favoritos ⭐ ({bookmarkedIds.length})</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Topics Grid */}
+      {filteredTopics.length === 0 ? (
+        <div className="bg-[#0d0d0d] rounded-2xl border border-white/10 p-12 text-center space-y-3">
+          <BookOpen className="w-10 h-10 text-white/20 mx-auto" />
+          <h4 className="text-base font-serif text-white">Nenhum tema encontrado</h4>
+          <p className="text-xs text-white/40 max-w-sm mx-auto">
+            Tente remover os filtros de busca ou crie um novo tema personalizado para o seu plano.
+          </p>
         </div>
       ) : (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-12 text-center"><BookOpen className="mx-auto h-8 w-8 text-slate-600" aria-hidden="true" /><h2 className="mt-3 font-bold text-white">Nenhum tema encontrado</h2><p className="mt-2 text-sm text-slate-500">Ajuste os filtros ou cadastre um novo assunto.</p></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTopics.map((topic) => (
+            <TopicCard
+              key={topic.id}
+              topic={topic}
+              onExplain={onExplain}
+              onAddToPlan={onAddToPlan}
+              onStartChallenge={onStartChallenge}
+              isBookmarked={bookmarkedIds.includes(topic.id)}
+              onToggleBookmark={onToggleBookmark}
+              isInPlan={plannedTopicIds.includes(topic.id)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 };
+

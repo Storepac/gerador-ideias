@@ -1,67 +1,81 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
-import { checkAiRateLimit, readOptionalText, readRequiredText } from "@/lib/ai-guard";
 
 export async function POST(req: NextRequest) {
   try {
-    const rateLimit = checkAiRateLimit(req, { limit: 10, windowMs: 10 * 60 * 1000 });
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: "Muitas gerações em pouco tempo. Tente novamente em alguns minutos." },
-        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
-      );
-    }
-
-    const body = await req.json();
-    const topicTitle = readRequiredText(body.topicTitle, "Tema", 220);
-    const topicCategory = readRequiredText(body.topicCategory, "Categoria", 120);
-    const difficulty = readRequiredText(body.difficulty, "Nível", 40);
-    const shortDescription = readRequiredText(body.shortDescription, "Descrição", 600);
-    const productContext = readOptionalText(body.productContext, 1200);
+    const { topicTitle, topicCategory, difficulty, shortDescription, productContext } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "A IA ainda não foi configurada neste ambiente." }, { status: 503 });
+      return NextResponse.json(
+        { error: "A chave GEMINI_API_KEY não foi configurada nas variáveis de ambiente do servidor." },
+        { status: 500 }
+      );
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+
     const prompt = `
-Você é um mentor de Growth Product Management da TechForWeb. Crie um guia de estudo claro, prático e crítico em português do Brasil.
+Você é um líder mundial especialista em Growth Product Management (Senior Director of Growth em empresas como Reforge, Duolingo, Slack, Stripe e Notion).
+Sua missão é criar um GUIA COMPLETO DE ESTUDO E APROFUNDAMENTO SEMANAL para um Growth PM sobre o seguinte tema:
 
-TEMA: ${topicTitle}
-CATEGORIA: ${topicCategory}
-NÍVEL: ${difficulty}
-DESCRIÇÃO: ${shortDescription}
-${productContext ? `CONTEXTO DO USUÁRIO: ${productContext}` : ""}
+📌 TEMA: "${topicTitle}"
+📂 CATEGORIA: ${topicCategory}
+📈 NÍVEL: ${difficulty}
+📝 DESCRIÇÃO BÁSICA: ${shortDescription}
+${productContext ? `🏢 CONTEXTO DO PRODUTO ATUAL DO PM: ${productContext}` : ''}
 
-Regras:
-- explique sem jargão vazio;
-- diferencie conceito, métrica e aplicação;
-- não invente números, pesquisas ou resultados empresariais;
-- se citar um caso real que precise de confirmação externa, sinalize isso claramente;
-- priorize entendimento e aplicação, não memorização.
+Por favor, forneça um guia altamente estruturado, prático, profundo e direto ao ponto, em PORTUGUÊS (Brasil).
+Formate a resposta em Markdown bem estruturado utilizando exatamente estas seções:
 
-Use estas seções em Markdown:
-### 1. Conceito central
-### 2. Por que isso importa
-### 3. Métricas de entrada e saída
-### 4. Como aplicar em 4 passos
-### 5. Exemplo prático
-### 6. Hipótese de experimento
-### 7. Perguntas para pensar
-### 8. Leituras e referências
-### 9. O que vale conferir em fontes externas
+### 1. 🎯 Conceito Central & Importância Estratégica
+Explique o conceito em detalhes, eliminando jargões vazios. Por que este conceito é vital para o crescimento sustentável do produto? Qual o erro comum que Product Managers cometem ao tentar aplicá-lo?
+
+### 2. 📊 Métricas Chave (Input vs Output Metrics)
+- **Output Metric (Métrica de Saída/Resultado Final):** Qual indicador de alto nível esta alavanca move?
+- **Input Metrics (Métricas de Entrada/Operacionais):** Quais 2 a 3 métricas diárias/semanais que o squad pode manipular diretamente para mover o indicador final?
+
+### 3. 🛠️ Framework de Aplicação Prática (Passo a Passo)
+Um guia acionável em 4 ou 5 passos claros de como implementar ou analisar este conceito no dia a dia do produto.
+
+### 4. 💡 Estudo de Caso Real do Mercado
+Apresente um exemplo real e conciso (ex: Spotify, Duolingo, Notion, Nubank, Airbnb, Canva ou Slack) demonstrando como essa estratégia foi aplicada na prática com sucesso e métricas impactadas.
+
+### 5. 🧪 Hipótese de Experimento para Esta Semana
+Formule uma hipótese de experimento completa no formato clássico de Growth PM:
+- **Se nós [Alteração/Inovação]**
+- **Para [Público-Alvo/Coorte]**
+- **Nós veremos [Impacto Esperado em Métrica X]**
+- **Porque [Justificativa Comportamental/Psicológica]**
+
+### 6. ❓ 3 Perguntas Provocativas para sua Reunião de Growth
+Perguntas profundas que o Growth PM deve fazer ao seu time de produto, dados e engenharia esta semana para descobrir oportunidades escondidas.
+
+### 7. 📚 Leitura & Leituras Recomendadas
+Mencione livros clássicos, artigos ou autores referência no assunto (ex: Reforge, Andrew Chen, Elena Verna, Brian Balfour, Casey Winters, Nir Eyal, Cialdini, Sean Ellis).
 `;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
       contents: prompt,
-      config: { temperature: 0.55 },
+      config: {
+        temperature: 0.7,
+      },
     });
 
-    return NextResponse.json({ explanation: response.text || "Não foi possível gerar a explicação no momento." });
+    const explanation = response.text || "Não foi possível gerar a explicação no momento.";
+
+    return NextResponse.json({ explanation });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Erro ao processar a solicitação.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    console.error("Erro na rota /api/gemini/explain:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao processar com Gemini.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

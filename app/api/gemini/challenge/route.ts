@@ -1,81 +1,77 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
-import { checkAiRateLimit, readOptionalText, readRequiredText } from "@/lib/ai-guard";
 
 export async function POST(req: NextRequest) {
   try {
-    const rateLimit = checkAiRateLimit(req, { limit: 10, windowMs: 10 * 60 * 1000 });
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: "Muitas gerações em pouco tempo. Tente novamente em alguns minutos." },
-        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
-      );
-    }
-
-    const body = await req.json();
-    const action = readRequiredText(body.action, "Ação", 20);
-    const topicTitle = readRequiredText(body.topicTitle, "Tema", 220);
-    const category = readRequiredText(body.category, "Categoria", 120);
-    const userSolution = readOptionalText(body.userSolution, 5000);
-    const challengePrompt = readOptionalText(body.challengePrompt, 6000);
-
-    if (action !== "generate" && action !== "evaluate") {
-      return NextResponse.json({ error: "Ação inválida." }, { status: 400 });
-    }
-
-    if (action === "evaluate" && (!userSolution || !challengePrompt)) {
-      return NextResponse.json({ error: "Desafio e resposta são obrigatórios para avaliação." }, { status: 400 });
-    }
+    const { action, topicTitle, category, userSolution, challengePrompt } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "A IA ainda não foi configurada neste ambiente." }, { status: 503 });
+      return NextResponse.json(
+        { error: "A chave GEMINI_API_KEY não foi configurada nas variáveis de ambiente." },
+        { status: 500 }
+      );
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     if (action === "generate") {
       const prompt = `
-Crie um desafio fictício de Growth Product Management em português do Brasil para praticar o tema "${topicTitle}" da categoria "${category}".
+Você é um VP de Growth realizando um teste prático de avaliação de habilidades com um candidato a Senior Growth Product Manager.
+Com base no tema de estudo: "${topicTitle}" (Categoria: ${category}).
 
-Estrutura:
-### Contexto fictício
-### Problema
-### Dados disponíveis
-### Seu desafio
-Inclua 3 perguntas: diagnóstico, métricas e experimento.
+Crie um DESAFIO DE CASO PRÁTICO REALISTA (Simulação de Dilema de Produto) em Português.
 
-Não use empresas reais nem apresente números como dados verdadeiros. O caso deve ser explicitamente fictício e plausível.
+Sua resposta deve conter em Markdown:
+1. **Contexto da Empresa**: Um produto fictício realista (ex: SaaS B2B, App B2C de Finanças, E-commerce PLG ou EdTech).
+2. **O Problema/Gargalo**: Uma queda de métrica repentina ou uma oportunidade não explorada relacionada ao tema "${topicTitle}".
+3. **Seu Desafio como Growth PM**: 3 perguntas/tarefas específicas que o candidato precisa responder (ex: como diagnosticar, quais métricas olhar primeiro, e qual experimento propor).
 `;
-      const response = await ai.models.generateContent({ model: "gemini-3.6-flash", contents: prompt, config: { temperature: 0.7 } });
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: prompt,
+        config: { temperature: 0.8 },
+      });
+
       return NextResponse.json({ challenge: response.text || "Desafio não gerado." });
-    }
+    } else if (action === "evaluate") {
+      const prompt = `
+Você é um Diretor de Growth PM avaliando a resposta de um Product Manager para o seguinte desafio prático:
 
-    const prompt = `
-Avalie de forma construtiva a resposta abaixo para um exercício fictício de Growth Product Management.
-
-TEMA: ${topicTitle}
-CATEGORIA: ${category}
-
-DESAFIO:
+**DESAFIO ORIGINAL:**
 ${challengePrompt}
 
-RESPOSTA:
-${userSolution}
+**RESPOSTA/SOLUÇÃO DO GROWTH PM:**
+"${userSolution}"
 
-Use:
-### Pontos fortes
-### Pontos cegos
-### Qualidade do raciocínio
-### Próximo passo para melhorar
-### Uma solução possível
-
-Evite transformar a avaliação em um ranking absoluto de senioridade. Avalie o raciocínio demonstrado nesta resposta específica.
+Por favor, forneça um feedback estruturado e construtivo em Português (Brasil) contendo:
+1. **Pontos Fortes da Resposta** (Raciocínio orientado a dados, clareza de métricas, foco em usuário).
+2. **Gargalos ou Pontos Cegos** (O que faltou considerar? Riscos não mencionados?).
+3. **Nota de Avaliação (1 a 10)** com justificativa de Senioridade (Iniciante, Pleno, Sênior, Staff).
+4. **Como um VP de Growth resolveria este dilema** (Dica de ouro de senioridade).
 `;
-    const response = await ai.models.generateContent({ model: "gemini-3.6-flash", contents: prompt, config: { temperature: 0.55 } });
-    return NextResponse.json({ evaluation: response.text || "Feedback não gerado." });
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: prompt,
+        config: { temperature: 0.7 },
+      });
+
+      return NextResponse.json({ evaluation: response.text || "Feedback não gerado." });
+    }
+
+    return NextResponse.json({ error: "Ação inválida especificada." }, { status: 400 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Erro ao processar a solicitação.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    console.error("Erro na rota /api/gemini/challenge:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro interno ao conectar com Gemini.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
