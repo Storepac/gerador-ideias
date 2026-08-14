@@ -38,7 +38,7 @@ export const TopicLibrary: React.FC<TopicLibraryProps> = ({ topics, onExplain, o
         <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <h1 className="text-3xl font-black text-white sm:text-4xl">Repertório para aprender e aplicar.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Explore conceitos de produto, growth, marketing, vendas e estratégia. Salve o que faz sentido e leve para seu plano de estudo.</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">Explore conceitos de Product Management, Growth, Dados, IA, Marketing, Vendas e Estratégia. Salve o que faz sentido e leve para seu plano de estudo.</p>
           </div>
           <button type="button" onClick={onOpenCreateTopicModal} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"><Plus className="h-4 w-4" aria-hidden="true" />Novo tema</button>
         </div>
