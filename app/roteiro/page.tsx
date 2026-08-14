@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Video } from 'lucide-react';
 import { ContentScriptModal } from '@/components/ContentScriptModal';
-import { INITIAL_TOPICS, type GrowthTopic } from '@/lib/growthTopics';
+import type { GrowthTopic } from '@/lib/growthTopics';
+import { OFFICIAL_TOPICS } from '@/lib/topicCatalog';
 import { getStoredPrefs } from '@/lib/storage';
 
 export default function RoteiroPage() {
@@ -28,10 +29,10 @@ export default function RoteiroPage() {
       <section className="mt-8">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-xl font-bold text-white">Escolha o assunto</h2>
-          <span className="text-xs text-slate-500">{INITIAL_TOPICS.length} temas</span>
+          <span className="text-xs text-slate-500">{OFFICIAL_TOPICS.length} temas</span>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {INITIAL_TOPICS.map((topic) => (
+          {OFFICIAL_TOPICS.map((topic) => (
             <button key={topic.id} type="button" onClick={() => setSelectedTopic(topic)} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-left transition hover:-translate-y-0.5 hover:border-blue-500/30 hover:bg-white/[0.05]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">{topic.categoryLabel}</span>
               <h3 className="mt-2 font-bold leading-snug text-white">{topic.title}</h3>
