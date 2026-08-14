@@ -9,7 +9,8 @@ import { AiDeepDiveModal } from '@/components/AiDeepDiveModal';
 import { CaseChallengeModal } from '@/components/CaseChallengeModal';
 import { NewTopicModal } from '@/components/NewTopicModal';
 import { ProductContextModal } from '@/components/ProductContextModal';
-import { GrowthTopic, INITIAL_TOPICS } from '@/lib/growthTopics';
+import type { GrowthTopic } from '@/lib/growthTopics';
+import { OFFICIAL_TOPICS } from '@/lib/topicCatalog';
 import {
   getStoredTopics,
   saveStoredTopics,
@@ -23,7 +24,7 @@ import {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'roulette' | 'planner' | 'library'>('roulette');
-  const [topics, setTopics] = useState<GrowthTopic[]>(() => typeof window !== 'undefined' ? getStoredTopics() : INITIAL_TOPICS);
+  const [topics, setTopics] = useState<GrowthTopic[]>(() => typeof window !== 'undefined' ? getStoredTopics() : OFFICIAL_TOPICS);
   const [plan, setPlan] = useState<WeeklyPlanItem[]>(() => typeof window !== 'undefined' ? getStoredPlan() : []);
   const [prefs, setPrefs] = useState<UserPreferences>(() => typeof window !== 'undefined' ? getStoredPrefs() : {
     currentWeek: 1,
