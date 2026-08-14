@@ -1,10 +1,11 @@
-import { GrowthTopic, INITIAL_TOPICS } from './growthTopics';
+import type { GrowthTopic } from './growthTopics';
+import { OFFICIAL_TOPICS, mergeOfficialTopics } from './topicCatalog';
 
 export interface WeeklyPlanItem {
   id: string;
   topicId: string;
   topic: GrowthTopic;
-  weekNumber: number; // e.g. 1, 2, 3...
+  weekNumber: number;
   status: 'planned' | 'studying' | 'mastered' | 'applied';
   notes: string;
   addedAt: string;
@@ -14,9 +15,9 @@ export interface WeeklyPlanItem {
 
 export interface UserPreferences {
   currentWeek: number;
-  weeklyGoal: number; // topics per week, default 1 or 2
+  weeklyGoal: number;
   targetCategories: string[];
-  productContext: string; // e.g. "Fintech B2C SaaS"
+  productContext: string;
   bookmarkedTopicIds: string[];
 }
 
@@ -27,45 +28,58 @@ const STORAGE_KEYS = {
 };
 
 export function getStoredTopics(): GrowthTopic[] {
-  if (typeof window === 'undefined') return INITIAL_TOPICS;
+  if (typeof window === 'undefined') return OFFICIAL_TOPICS;
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.TOPICS);
-    if (!raw) return INITIAL_TOPICS;
+    if (!raw) return OFFICIAL_TOPICS;
+
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_TOPICS;
-  } catch (e) {
-    console.error('Failed to parse stored topics:', e);
-    return INITIAL_TOPICS;
+    if (!Array.isArray(parsed) || parsed.length === 0) return OFFICIAL_TOPICS;
+
+    const merged = mergeOfficialTopics(parsed as GrowthTopic[]);
+
+    if (merged.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEYS.TOPICS, JSON.stringify(merged));
+    }
+
+    return merged;
+  } catch (error) {
+    console.error('Failed to parse stored topics:', error);
+    return OFFICIAL_TOPICS;
   }
 }
 
 export function saveStoredTopics(topics: GrowthTopic[]): void {
   if (typeof window === 'undefined') return;
+
   try {
     localStorage.setItem(STORAGE_KEYS.TOPICS, JSON.stringify(topics));
-  } catch (e) {
-    console.error('Failed to save topics:', e);
+  } catch (error) {
+    console.error('Failed to save topics:', error);
   }
 }
 
 export function getStoredPlan(): WeeklyPlanItem[] {
   if (typeof window === 'undefined') return [];
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PLAN);
     if (!raw) return [];
     return JSON.parse(raw);
-  } catch (e) {
-    console.error('Failed to parse study plan:', e);
+  } catch (error) {
+    console.error('Failed to parse study plan:', error);
     return [];
   }
 }
 
 export function saveStoredPlan(plan: WeeklyPlanItem[]): void {
   if (typeof window === 'undefined') return;
+
   try {
     localStorage.setItem(STORAGE_KEYS.PLAN, JSON.stringify(plan));
-  } catch (e) {
-    console.error('Failed to save study plan:', e);
+  } catch (error) {
+    console.error('Failed to save plan:', error);
   }
 }
 
@@ -77,21 +91,24 @@ export function getStoredPrefs(): UserPreferences {
     productContext: '',
     bookmarkedTopicIds: [],
   };
+
   if (typeof window === 'undefined') return defaultPrefs;
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PREFS);
     if (!raw) return defaultPrefs;
     return { ...defaultPrefs, ...JSON.parse(raw) };
-  } catch (e) {
+  } catch {
     return defaultPrefs;
   }
 }
 
 export function saveStoredPrefs(prefs: UserPreferences): void {
   if (typeof window === 'undefined') return;
+
   try {
     localStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(prefs));
-  } catch (e) {
-    console.error('Failed to save prefs:', e);
+  } catch (error) {
+    console.error('Failed to save prefs:', error);
   }
 }
