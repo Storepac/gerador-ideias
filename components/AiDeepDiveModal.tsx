@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { GrowthTopic } from '@/lib/growthTopics';
-import { Sparkles, X, Copy, Check, CalendarPlus, Target, Download, BookOpen, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Sparkles, X, Copy, Check, CalendarPlus, Target, Download, RefreshCw, AlertTriangle, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Markdown, splitMarkdownSections } from '@/components/Markdown';
 
 interface AiDeepDiveModalProps {
   topic: GrowthTopic | null;
   onClose: () => void;
   onAddToPlan: (topic: GrowthTopic, cachedExplanation?: string) => void;
   onStartChallenge: (topic: GrowthTopic) => void;
+  onCreateScript: (topic: GrowthTopic) => void;
   productContext: string;
   isInPlan: boolean;
 }
@@ -19,6 +21,7 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
   onClose,
   onAddToPlan,
   onStartChallenge,
+  onCreateScript,
   productContext,
   isInPlan,
 }) => {
@@ -87,6 +90,8 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
     document.body.removeChild(a);
   };
 
+  const guide = React.useMemo(() => splitMarkdownSections(explanation), [explanation]);
+
   if (!topic) return null;
 
   return (
@@ -154,28 +159,30 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
             )}
 
             {!loading && !error && explanation && (
-              <div className="prose prose-invert max-w-none space-y-4 text-sm leading-relaxed">
-                {/* Format markdown sections gracefully */}
-                {explanation.split(/(?=### )/).map((section, idx) => {
-                  if (!section.trim()) return null;
-                  const lines = section.trim().split('\n');
-                  const title = lines[0].replace('### ', '');
-                  const bodyLines = lines.slice(1).join('\n');
+              <div className="max-w-none space-y-4 text-sm">
+                {guide.intro && (
+                  <Markdown
+                    text={guide.intro}
+                    className={
+                      guide.sections.length
+                        ? 'space-y-3 rounded-2xl border border-blue-500/15 bg-blue-500/[0.06] p-5 text-sm'
+                        : 'space-y-3 text-sm'
+                    }
+                  />
+                )}
 
-                  return (
-                    <div
-                      key={idx}
-                      className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800/80 space-y-3"
-                    >
-                      <h4 className="text-base font-bold text-indigo-300 flex items-center space-x-2 border-b border-slate-800/80 pb-2">
-                        <span>{title}</span>
-                      </h4>
-                      <div className="text-slate-300 whitespace-pre-wrap leading-relaxed">
-                        {bodyLines}
-                      </div>
-                    </div>
-                  );
-                })}
+                {guide.sections.map((section, idx) => (
+                  <section
+                    key={`${section.title}-${idx}`}
+                    className="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-950/60 p-5"
+                  >
+                    <h4 className="border-b border-slate-800/80 pb-2 text-base font-bold text-blue-300">
+                      {section.title}
+                    </h4>
+                    <Markdown text={section.body} />
+                  </section>
+                ))}
+
               </div>
             )}
           </div>
@@ -202,7 +209,18 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
               </button>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  onCreateScript(topic);
+                  onClose();
+                }}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
+              >
+                <Video className="w-4 h-4 text-cyan-300" />
+                <span>Virar roteiro</span>
+              </button>
+
               <button
                 onClick={() => {
                   onStartChallenge(topic);

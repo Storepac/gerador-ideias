@@ -3,6 +3,22 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Copy, RefreshCw, Video, X } from 'lucide-react';
 import { GrowthTopic } from '@/lib/growthTopics';
+import { Markdown, splitMarkdownSections } from '@/components/Markdown';
+
+type Audience = 'owner' | 'peers';
+
+const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
+  {
+    id: 'owner',
+    label: 'Quem toca um negócio',
+    hint: 'Linguagem do dia a dia. O termo técnico só aparece depois da ideia explicada, e uma vez só.',
+  },
+  {
+    id: 'peers',
+    label: 'Quem já é da área',
+    hint: 'Vocabulário de produto liberado, com mais profundidade no mecanismo e no trade-off.',
+  },
+];
 
 interface ContentScriptModalProps {
   topic: GrowthTopic | null;
@@ -15,8 +31,9 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
   const [script, setScript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [audience, setAudience] = useState<Audience>('owner');
 
-  const generate = React.useCallback(async (targetTopic: GrowthTopic) => {
+  const generate = React.useCallback(async (targetTopic: GrowthTopic, targetAudience: Audience) => {
     setLoading(true);
     setError(null);
     setScript('');
@@ -31,6 +48,7 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
           difficulty: targetTopic.difficulty,
           shortDescription: targetTopic.shortDescription,
           productContext: productContext || undefined,
+          audience: targetAudience,
         }),
       });
 
@@ -46,9 +64,13 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
 
   useEffect(() => {
     if (!topic) return;
-    const timer = setTimeout(() => generate(topic), 0);
+    const timer = setTimeout(() => generate(topic, audience), 0);
     return () => clearTimeout(timer);
+    // a troca de publico chama generate direto, para nao regerar ao reabrir
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topic, generate]);
+
+  const parsed = React.useMemo(() => splitMarkdownSections(script), [script]);
 
   if (!topic) return null;
 
@@ -78,6 +100,37 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
           </button>
         </div>
 
+        <div className="border-b border-white/10 bg-white/[0.02] px-5 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Falando para</span>
+            <div className="flex gap-1.5" role="group" aria-label="Público do roteiro">
+              {AUDIENCES.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={audience === option.id}
+                  disabled={loading}
+                  onClick={() => {
+                    if (option.id === audience) return;
+                    setAudience(option.id);
+                    generate(topic, option.id);
+                  }}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition disabled:opacity-50 ${
+                    audience === option.id
+                      ? 'border-blue-400/40 bg-blue-500/15 text-blue-100'
+                      : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            {AUDIENCES.find((option) => option.id === audience)?.hint}
+          </p>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-5 sm:p-6">
           {loading && (
             <div className="flex min-h-72 flex-col items-center justify-center gap-4 text-center">
@@ -93,7 +146,7 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
             <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5">
               <p className="font-semibold text-red-200">Não foi possível gerar o roteiro.</p>
               <p className="mt-2 text-sm text-red-200/80">{error}</p>
-              <button type="button" onClick={() => generate(topic)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/25">
+              <button type="button" onClick={() => generate(topic, audience)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/25">
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 Tentar novamente
               </button>
@@ -102,17 +155,15 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
 
           {!loading && !error && script && (
             <div className="space-y-4">
-              {script.split(/(?=### )/).map((section, index) => {
-                if (!section.trim()) return null;
-                const lines = section.trim().split('\n');
-                const heading = lines[0].replace('### ', '');
-                const body = lines.slice(1).join('\n').trim();
-                const isVerification = heading.toLowerCase().includes('conferir');
+              {parsed.intro && <Markdown text={parsed.intro} className="space-y-3 text-sm" />}
+
+              {parsed.sections.map((section, index) => {
+                const isVerification = section.title.toLowerCase().includes('conferir');
 
                 return (
-                  <section key={`${heading}-${index}`} className={`rounded-2xl border p-5 ${isVerification ? 'border-amber-500/20 bg-amber-500/5' : 'border-white/10 bg-white/[0.03]'}`}>
-                    <h3 className={`text-sm font-bold uppercase tracking-[0.12em] ${isVerification ? 'text-amber-300' : 'text-blue-300'}`}>{heading}</h3>
-                    <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-200">{body}</div>
+                  <section key={`${section.title}-${index}`} className={`rounded-2xl border p-5 ${isVerification ? 'border-amber-500/20 bg-amber-500/5' : 'border-white/10 bg-white/[0.03]'}`}>
+                    <h3 className={`text-sm font-bold uppercase tracking-[0.12em] ${isVerification ? 'text-amber-300' : 'text-blue-300'}`}>{section.title}</h3>
+                    <Markdown text={section.body} className="mt-3 space-y-3 text-sm" />
                   </section>
                 );
               })}
@@ -123,7 +174,7 @@ export function ContentScriptModal({ topic, productContext, onClose }: ContentSc
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-black/10 px-5 py-4 sm:px-6">
           <p className="max-w-xl text-xs leading-relaxed text-slate-500">Use o roteiro como estrutura. Antes de gravar, entenda o conceito e adapte para sua forma de falar.</p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => generate(topic)} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:opacity-50">
+            <button type="button" onClick={() => generate(topic, audience)} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:opacity-50">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Gerar novamente
             </button>

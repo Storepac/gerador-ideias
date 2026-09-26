@@ -7,6 +7,7 @@ import { StudyPlanner } from '@/components/StudyPlanner';
 import { TopicLibrary } from '@/components/TopicLibrary';
 import { AiDeepDiveModal } from '@/components/AiDeepDiveModal';
 import { CaseChallengeModal } from '@/components/CaseChallengeModal';
+import { ContentScriptModal } from '@/components/ContentScriptModal';
 import { NewTopicModal } from '@/components/NewTopicModal';
 import { ProductContextModal } from '@/components/ProductContextModal';
 import type { GrowthTopic } from '@/lib/growthTopics';
@@ -36,6 +37,7 @@ export default function Home() {
 
   const [explainTopic, setExplainTopic] = useState<GrowthTopic | null>(null);
   const [challengeTopic, setChallengeTopic] = useState<GrowthTopic | null>(null);
+  const [scriptTopic, setScriptTopic] = useState<GrowthTopic | null>(null);
   const [isNewTopicOpen, setIsNewTopicOpen] = useState(false);
   const [isContextOpen, setIsContextOpen] = useState(false);
   const [targetWeekForAdd, setTargetWeekForAdd] = useState(1);
@@ -125,8 +127,9 @@ export default function Home() {
         {activeTab === 'library' && <TopicLibrary topics={topics} onExplain={setExplainTopic} onAddToPlan={(topic) => handleAddToPlan(topic, undefined, targetWeekForAdd)} onStartChallenge={setChallengeTopic} bookmarkedIds={prefs.bookmarkedTopicIds} onToggleBookmark={handleToggleBookmark} plannedTopicIds={plannedTopicIds} onOpenCreateTopicModal={() => setIsNewTopicOpen(true)} />}
       </main>
 
-      <AiDeepDiveModal topic={explainTopic} onClose={() => setExplainTopic(null)} onAddToPlan={(topic, cache) => handleAddToPlan(topic, cache, prefs.currentWeek)} onStartChallenge={setChallengeTopic} productContext={prefs.productContext} isInPlan={explainTopic ? plannedTopicIds.includes(explainTopic.id) : false} />
+      <AiDeepDiveModal topic={explainTopic} onClose={() => setExplainTopic(null)} onAddToPlan={(topic, cache) => handleAddToPlan(topic, cache, prefs.currentWeek)} onStartChallenge={setChallengeTopic} onCreateScript={setScriptTopic} productContext={prefs.productContext} isInPlan={explainTopic ? plannedTopicIds.includes(explainTopic.id) : false} />
       <CaseChallengeModal topic={challengeTopic} onClose={() => setChallengeTopic(null)} />
+      <ContentScriptModal topic={scriptTopic} onClose={() => setScriptTopic(null)} productContext={prefs.productContext} />
       <NewTopicModal isOpen={isNewTopicOpen} onClose={() => setIsNewTopicOpen(false)} onCreateTopic={createTopic} />
       <ProductContextModal isOpen={isContextOpen} onClose={() => setIsContextOpen(false)} productContext={prefs.productContext} onSaveProductContext={saveProductContext} />
 

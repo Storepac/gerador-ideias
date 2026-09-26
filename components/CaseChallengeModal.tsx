@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GrowthTopic } from '@/lib/growthTopics';
+import { Markdown } from '@/components/Markdown';
 import { Target, X, Send, Award, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -154,7 +155,7 @@ export const CaseChallengeModal: React.FC<CaseChallengeModalProps> = ({ topic, o
                       <span>Gerar Outro Cenário</span>
                     </button>
                   </div>
-                  <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{challengePrompt}</div>
+                  <Markdown text={challengePrompt} className="space-y-3 text-sm" />
                 </div>
 
                 {!evaluation && (
@@ -194,7 +195,7 @@ export const CaseChallengeModal: React.FC<CaseChallengeModalProps> = ({ topic, o
                       <Award className="w-5 h-5 text-amber-400" />
                       <span>FEEDBACK SOBRE O RACIOCÍNIO</span>
                     </div>
-                    <div className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">{evaluation}</div>
+                    <Markdown text={evaluation} className="space-y-3 text-xs" />
                     <div className="pt-3 border-t border-slate-800 flex justify-end">
                       <button onClick={() => { setEvaluation(''); setUserSolution(''); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700">
                         Refazer Resposta
