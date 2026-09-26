@@ -73,6 +73,8 @@ Regras obrigatórias:
 - roteiro falado de aproximadamente 130 a 190 palavras;
 - explique uma ideia central, um exemplo e uma aplicação prática;
 - não invente estatísticas, pesquisas, datas, empresas ou resultados;
+- o público é brasileiro: use exemplo daqui, com maquininha, parcelamento, Pix, frete, imposto e marketplace quando couber, nunca o cenário americano por padrão;
+- termo técnico em inglês pode ficar, porque é como ele aparece nas ferramentas, desde que venha explicado;
 - quando um caso real exigir confirmação factual, coloque-o no bloco de verificação;
 - seja conciso para evitar texto desnecessário.
 

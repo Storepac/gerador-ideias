@@ -1,8 +1,9 @@
 import type { GrowthTopic } from './growthTopics';
 import { INITIAL_TOPICS } from './growthTopics';
 import { EXTRA_GROWTH_TOPICS } from './extraGrowthTopics';
+import { PRICING_METRICS_TOPICS } from './pricingMetricsTopics';
 
-export const OFFICIAL_TOPICS: GrowthTopic[] = [...INITIAL_TOPICS, ...EXTRA_GROWTH_TOPICS];
+export const OFFICIAL_TOPICS: GrowthTopic[] = [...INITIAL_TOPICS, ...EXTRA_GROWTH_TOPICS, ...PRICING_METRICS_TOPICS];
 
 export function mergeOfficialTopics(storedTopics: GrowthTopic[]): GrowthTopic[] {
   const storedById = new Map(storedTopics.map((topic) => [topic.id, topic]));

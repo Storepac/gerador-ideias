@@ -6,7 +6,8 @@ export type LearningTrackId =
   | 'ai-product'
   | 'data-metrics'
   | 'marketing-acquisition'
-  | 'saas-monetization';
+  | 'saas-monetization'
+  | 'pricing-numbers';
 
 export interface LearningTrack {
   id: LearningTrackId;
@@ -86,6 +87,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
     description: 'Instrumentação, North Star, coortes, growth accounting, guardrails, experimentação e incrementalidade.',
     outcome: 'Construa uma base de métricas capaz de sustentar decisões de produto e growth sem depender de métricas de vaidade.',
     topicIds: [
+      'data-06',
       'data-01',
       'exp-01',
       'data-02',
@@ -133,14 +135,35 @@ export const LEARNING_TRACKS: LearningTrack[] = [
       'act-01',
       'act-03',
       'ret-02',
+      'mon-04',
+      'mon-06',
       'mon-01',
       'mon-02',
       'mon-03',
+      'mon-08',
       'plg-01',
       'str-03',
       'ai-06',
     ],
     accent: 'border-indigo-500/30 bg-indigo-500/[0.07] text-indigo-200',
+  },
+  {
+    id: 'pricing-numbers',
+    title: 'Precificação & Números do Negócio',
+    shortTitle: 'Precificação',
+    description: 'Do preço de venda ao payback do cliente: margem, ponto de equilíbrio, desconto, reajuste e o significado de cada sigla que aparece nas ferramentas.',
+    outcome: 'Saiba formar preço, ler a margem de cada produto e responder em quanto tempo um cliente se paga.',
+    topicIds: [
+      'data-06',
+      'mon-04',
+      'mon-05',
+      'mon-07',
+      'mon-06',
+      'mon-01',
+      'mon-03',
+      'mon-08',
+    ],
+    accent: 'border-amber-500/30 bg-amber-500/[0.07] text-amber-200',
   },
 ];
 

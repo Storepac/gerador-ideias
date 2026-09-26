@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { GrowthTopic } from '@/lib/growthTopics';
-import { Sparkles, X, Copy, Check, CalendarPlus, Target, Download, RefreshCw, AlertTriangle, Video } from 'lucide-react';
+import { Sparkles, X, Copy, Check, CalendarPlus, Target, Download, RefreshCw, AlertTriangle, Video, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Markdown, splitMarkdownSections } from '@/components/Markdown';
+import { getTopicReferences, ROTULO_DO_TIPO } from '@/lib/topicReferences';
 
 interface AiDeepDiveModalProps {
   topic: GrowthTopic | null;
@@ -40,6 +41,7 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          topicId: targetTopic.id,
           topicTitle: targetTopic.title,
           topicCategory: targetTopic.categoryLabel,
           difficulty: targetTopic.difficulty,
@@ -91,6 +93,7 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
   };
 
   const guide = React.useMemo(() => splitMarkdownSections(explanation), [explanation]);
+  const fontes = topic ? getTopicReferences(topic.id) : [];
 
   if (!topic) return null;
 
@@ -183,6 +186,35 @@ export const AiDeepDiveModal: React.FC<AiDeepDiveModalProps> = ({
                   </section>
                 ))}
 
+                {fontes.length > 0 && (
+                  <section className="space-y-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5">
+                    <div className="flex items-center gap-2 border-b border-emerald-500/20 pb-2">
+                      <BookOpen className="h-4 w-4 text-emerald-400" />
+                      <h4 className="text-base font-bold text-emerald-300">Fontes conferidas</h4>
+                    </div>
+                    <p className="text-xs leading-5 text-slate-400">
+                      Links abertos e checados por nós, fora do que a IA escreveu acima. Se algo no guia
+                      contradisser uma destas, confie na fonte.
+                    </p>
+                    <ul className="space-y-2">
+                      {fontes.map((fonte) => (
+                        <li key={fonte.url} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+                          <span className="rounded-md border border-white/10 bg-black/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            {ROTULO_DO_TIPO[fonte.tipo]}
+                          </span>
+                          <a
+                            href={fonte.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="font-medium text-blue-300 underline decoration-blue-400/40 underline-offset-2 transition hover:text-blue-200"
+                          >
+                            {fonte.rotulo}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </div>
             )}
           </div>

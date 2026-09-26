@@ -14,7 +14,7 @@ export const EXTRA_GROWTH_TOPICS: GrowthTopic[] = [
       'Qual é o experimento mais barato capaz de reduzir a incerteza antes de construir?'
     ],
     tags: ['Continuous Discovery', 'OST', 'Product Discovery', 'Teresa Torres'],
-    suggestedFramework: 'Opportunity Solution Tree — Teresa Torres'
+    suggestedFramework: 'Opportunity Solution Tree, Teresa Torres'
   },
   {
     id: 'prod-02',
@@ -89,7 +89,7 @@ export const EXTRA_GROWTH_TOPICS: GrowthTopic[] = [
       'Quais oportunidades boas decidimos conscientemente não perseguir?'
     ],
     tags: ['Product Strategy', 'Strategic Bets', 'Diagnosis', 'Product Vision'],
-    suggestedFramework: 'Strategy Kernel — Diagnosis, Guiding Policy, Coherent Actions'
+    suggestedFramework: 'Strategy Kernel, Diagnosis, Guiding Policy, Coherent Actions'
   },
   {
     id: 'data-01',

@@ -11,6 +11,7 @@ import {
   releaseAiRequest,
   reserveAiRequest,
 } from "@/lib/ai-guard";
+import { formatReferencesForPrompt } from "@/lib/topicReferences";
 
 export async function POST(req: NextRequest) {
   const guard = reserveAiRequest(req);
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
 
   try {
     let body: Record<string, unknown>;
+    let topicId: string;
     let topicTitle: string;
     let topicCategory: string;
     let difficulty: string;
@@ -28,6 +30,7 @@ export async function POST(req: NextRequest) {
 
     try {
       body = await readJsonBody(req);
+      topicId = readOptionalText(body.topicId, 60);
       topicTitle = readRequiredText(body.topicTitle, "Tema", 220);
       topicCategory = readRequiredText(body.topicCategory, "Categoria", 120);
       difficulty = readRequiredText(body.difficulty, "Nível", 40);
@@ -39,6 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ai = new GoogleGenAI({ apiKey: reservation.apiKey });
+    const fontes = formatReferencesForPrompt(topicId);
     const prompt = `
 Você é um mentor de Growth Product Management da TechForWeb. Crie um guia de estudo claro, prático e crítico em português do Brasil.
 
@@ -48,12 +52,22 @@ NÍVEL: ${difficulty}
 DESCRIÇÃO: ${shortDescription}
 ${productContext ? `CONTEXTO DO USUÁRIO: ${productContext}` : ""}
 
+${
+  fontes
+    ? `FONTES VERIFICADAS (a seção 8 usa apenas estas, e nenhuma outra):
+${fontes}`
+    : "Não há fontes verificadas para este tema. Na seção 8, diga isso e sugira que tipo de fonte procurar, sem citar títulos ou links específicos."
+}
+
 Regras:
 - explique sem jargão vazio;
 - seja conciso: cada seção deve priorizar o que realmente ajuda a entender e aplicar;
 - diferencie conceito, métrica e aplicação;
 - não invente números, pesquisas ou resultados empresariais;
+- nunca invente título de livro, artigo, autor ou link: fora da lista acima, não existe;
 - se citar um caso real que precise de confirmação externa, sinalize isso claramente;
+- o leitor é brasileiro: traga o exemplo para a realidade daqui, com maquininha, parcelamento, Pix, frete, imposto e marketplace quando couber, em vez de assumir o cenário americano;
+- mantenha o termo técnico em inglês, porque é como ele aparece nas ferramentas, mas explique o que ele significa na primeira vez que usar;
 - priorize entendimento e aplicação, não memorização.
 
 Use estas seções em Markdown:
