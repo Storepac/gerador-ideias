@@ -34,13 +34,23 @@ export const RandomWheel: React.FC<RandomWheelProps> = ({
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [drawnTopics, setDrawnTopics] = useState<GrowthTopic[]>([]);
   const [spinCount, setSpinCount] = useState<number>(0);
+  const [ultimoSorteio, setUltimoSorteio] = useState<string[]>([]);
 
-  // Filter topics
-  const filteredTopics = topics.filter((t) => {
-    const categoryMatch = selectedCategory === 'all' || t.category === selectedCategory;
-    const difficultyMatch = selectedDifficulty === 'all' || t.difficulty === selectedDifficulty;
-    return categoryMatch && difficultyMatch;
-  });
+  const naCategoria = topics.filter(
+    (t) => selectedCategory === 'all' || t.category === selectedCategory,
+  );
+  const filteredTopics = naCategoria.filter(
+    (t) => selectedDifficulty === 'all' || t.difficulty === selectedDifficulty,
+  );
+
+  // Quantos temas existem em cada nível dentro da categoria escolhida. Serve
+  // para o filtro não ser uma caixa preta: dá para ver que Iniciante tem dez
+  // temas antes de sortear, e que um cruzamento de filtros zerou a urna.
+  const NIVEIS = ['Iniciante', 'Intermediário', 'Avançado'] as const;
+  const contagem = NIVEIS.map((nivel) => ({
+    nivel,
+    total: naCategoria.filter((t) => t.difficulty === nivel).length,
+  }));
 
   const handleDraw = () => {
     if (filteredTopics.length === 0) return;
@@ -50,15 +60,18 @@ export const RandomWheel: React.FC<RandomWheelProps> = ({
 
     setTimeout(() => {
       let results: GrowthTopic[] = [];
+      const quantos = drawMode === 'single' ? 1 : 3;
 
-      if (drawMode === 'single') {
-        const randomIndex = Math.floor(Math.random() * filteredTopics.length);
-        results = [filteredTopics[randomIndex]];
-      } else {
-        const shuffled = [...filteredTopics].sort(() => 0.5 - Math.random());
-        results = shuffled.slice(0, Math.min(3, shuffled.length));
-      }
+      // Com o filtro em Iniciante sobram poucos temas, e sortear de novo caia
+      // sempre no mesmo. Tiramos o sorteio anterior da urna, desde que ainda
+      // sobre gente suficiente para sortear.
+      const semRepetir = filteredTopics.filter((t) => !ultimoSorteio.includes(t.id));
+      const urna = semRepetir.length >= quantos ? semRepetir : filteredTopics;
 
+      const embaralhado = [...urna].sort(() => 0.5 - Math.random());
+      results = embaralhado.slice(0, Math.min(quantos, embaralhado.length));
+
+      setUltimoSorteio(results.map((t) => t.id));
       setDrawnTopics(results);
       setIsSpinning(false);
       setSpinCount((prev) => prev + 1);
@@ -157,12 +170,28 @@ export const RandomWheel: React.FC<RandomWheelProps> = ({
                 onChange={(e) => setSelectedDifficulty(e.target.value)}
                 className="w-full bg-[#0a0a0a] text-white/90 text-xs rounded-xl border border-white/10 px-3 py-2.5 focus:outline-none focus:border-[#c8a45d]/60"
               >
-                <option value="all">Todas as Dificuldades</option>
-                <option value="Iniciante">Iniciante</option>
-                <option value="Intermediário">Intermediário</option>
-                <option value="Avançado">Avançado</option>
+                <option value="all">Todas as Dificuldades ({naCategoria.length})</option>
+                {contagem.map(({ nivel, total }) => (
+                  <option key={nivel} value={nivel} disabled={total === 0}>
+                    {nivel} ({total})
+                  </option>
+                ))}
               </select>
             </div>
+
+            <p className="sm:col-span-2 text-left text-[11px] leading-5 text-white/45">
+              {filteredTopics.length === 0 ? (
+                <span className="text-[#c8a45d]">
+                  Nenhum tema neste cruzamento de filtros. Volte a dificuldade para todas.
+                </span>
+              ) : (
+                <>
+                  Sorteando entre <strong className="text-white/80">{filteredTopics.length}</strong>{' '}
+                  {filteredTopics.length === 1 ? 'tema' : 'temas'}
+                  {selectedDifficulty !== 'all' && <> de nível {selectedDifficulty.toLowerCase()}</>}.
+                </>
+              )}
+            </p>
           </div>
 
           {/* Spin Trigger Button */}
@@ -217,6 +246,11 @@ export const RandomWheel: React.FC<RandomWheelProps> = ({
               <Trophy className="w-5 h-5 text-[#c8a45d]" />
               <h3 className="text-xl font-serif text-white">
                 {drawMode === 'single' ? 'Tema Sorteado para Estudo' : 'Combo de 3 Conceitos Interseccionados'}
+                {selectedDifficulty !== 'all' && (
+                  <span className="ml-2 align-middle text-[10px] uppercase tracking-widest text-[#c8a45d]">
+                    {selectedDifficulty}
+                  </span>
+                )}
               </h3>
             </div>
 
